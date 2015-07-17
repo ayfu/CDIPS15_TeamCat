@@ -1,0 +1,30 @@
+Focus on the years 2011-2014
+
+Months 16332 counts for months 6-10 - ranking - 8,7,6,10,9
+81.2% in these five months (16332/20118)
+years column
+month column
+days column
+
+There's a variation in price with the month in the same year.
+Bharat wants to use a date with everything reference to dec 31 2011 as 0
+jan 1 2012 is 1 and jan 2 2012 as 2. I can just subtract all dates by dec 31 2011
+
+S-0066 - supplier is the largest
+
+ignore annual usage for first round.
+
+ignore minimum order quantity (all is 0 for 18660/19800 - 94%)
+
+everything has bracket pricing - remove stuff with non-bracket pricing
+
+drop: - annual_usage, and min_order_quantity, billdf drop 4,5,6,7,8
+		other, num_boss, num_bracket, end_x_1x,end_a_1x
+
+subset: bracket pricing, focus only on supplier S-0066
+
+add - year, month, day
+
+billdf drop 4,5,6,7,8
+empty string for components
+
