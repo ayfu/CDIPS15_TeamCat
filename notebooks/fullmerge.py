@@ -58,11 +58,11 @@ test = pd.merge(test,all_files['tube'], on = 'tube_assembly_id')
 
 train['year'] = train['quote_date'].dt.year
 train['month'] = train['quote_date'].dt.month
-train['day'] = [date.days for date in train['quote_date'] - dt.date(1982,9,22)]
+train['day'] = [date.days for date in train['quote_date'] - dt.date(1982,1,1)]
 
 test['year'] = test['quote_date'].dt.year
 test['month'] = test['quote_date'].dt.month
-test['day'] = [date.days for date in test['quote_date'] - dt.date(1985,11,16)]
+test['day'] = [date.days for date in test['quote_date'] - dt.date(1982,1,1)]
 
 
 comp_id = ['component_id_'+str(i) for i in range(1,9)]
@@ -477,3 +477,37 @@ for i in componName:
     train[i] = comp_name(i)
 for i in componNameTest:
     test[i] = comp_nameTest(i)
+
+
+
+'''
+CLEAN OUT DIRTY COLUMN
+'''
+
+c = train['nominal_size_1_comp1'].copy()
+print "# of 'See Drawing' observations:", len(c[c == 'See Drawing'])
+
+for x in range(len(c)):
+    if pd.isnull(c[x]):
+        continue
+    else:
+        try:
+            c[x] = float(c[x])
+        except:
+            c[x] = np.nan
+
+train['nominal_size_1_comp1'] = c
+
+d = test['nominal_size_1_comp1'].copy()
+print "# of 'See Drawing' observations:", len(d[d == 'See Drawing'])
+
+for x in range(len(d)):
+    if pd.isnull(d[x]):
+        continue
+    else:
+        try:
+            d[x] = float(d[x])
+        except:
+            d[x] = np.nan
+
+test['nominal_size_1_comp1'] = d
