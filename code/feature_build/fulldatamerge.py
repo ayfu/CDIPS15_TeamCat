@@ -9,16 +9,16 @@ import copy
 
 ## Read in files
 
-allfiles = glob.glob(os.path.join('competition_data','*.csv'))
-comp_files = glob.glob(os.path.join('competition_data','comp_*'))
+allfiles = glob.glob(os.path.join('..','..','competition_data','*.csv'))
+comp_files = glob.glob(os.path.join('..','..','competition_data','comp_*'))
 #newtrain_df = pd.read_csv(os.path.join('train.csv'),index_col = 0)
 
 all_files = {}
 for afile in allfiles:
     key = afile.split('\\')[-1].split('.')[0]
     all_files[key] = pd.read_csv(afile, header = 0)
-all_files['train_set'] = pd.read_csv('competition_data/train_set.csv', header = 0, parse_dates = ['quote_date'])
-all_files['test_set'] = pd.read_csv('competition_data/test_set.csv', header = 0, parse_dates = ['quote_date'])
+all_files['train_set'] = pd.read_csv('../../competition_data/train_set.csv', header = 0, parse_dates = ['quote_date'])
+all_files['test_set'] = pd.read_csv('../../competition_data/test_set.csv', header = 0, parse_dates = ['quote_date'])
 
 # Components
 comp_dict = {}
@@ -30,7 +30,7 @@ for compfile in comp_files:
 rest = ['components.csv','specs.csv','tube_end_form.csv','type_component.csv','type_connection.csv','type_end_form.csv']
 restfile = []
 for x in rest:
-    restfile += [os.path.join('competition_data',x)]
+    restfile += [os.path.join('..','..','competition_data',x)]
 rest_files = {}
 for r in restfile:
     key = r.split('\\')[-1].split('.')[0]
@@ -331,3 +331,17 @@ for x in range(len(c)):
             c[x] = np.nan
 
 traintest['nominal_size_1_comp1'] = c
+
+file_name = '../my_data/traintestCOMP.csv'
+traintest.to_csv(file_name, index = False)
+print 'File created:', file_name
+print 'DataFrame shape:', traintest.shape
+
+'''
+file_name2 = '../my_data/tube_assembly_id.csv'
+tube_assem = traintest['tube_assembly_id']
+tube_assem.columns = ['tube_assembly_id']
+tube_assem.to_csv(file_name2, index = False)
+print 'File create:', file_name2
+print 'Data shape:', traintest['tube_assembly_id'].shape
+'''
