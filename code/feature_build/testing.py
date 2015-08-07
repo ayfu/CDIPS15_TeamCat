@@ -16,5 +16,4 @@ from dataclean import *
 
 cmd = "python fulldatamerge.py"
 os.system(cmd)
-print traintest.shape
-print 'Done'
+print 'Full Data Merge: Done'
