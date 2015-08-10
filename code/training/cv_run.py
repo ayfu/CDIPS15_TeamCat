@@ -44,8 +44,37 @@ def xgboost_model(train, test, num_round, params):
     xgb_train = xgb.DMatrix(X, label = ylog1p)
     xgb_test = xgb.DMatrix(X_test)
 
-    bst = xgb.train(params, xgb_train, num_round)
-    y_pred = bst.predict(xgb_test)
+    #bst = xgb.train(params, xgb_train, num_round)
+    #y_pred = bst.predict(xgb_test)
+
+    # Round 1
+    bst1 = xgb.train(params, xgb_train, num_round)
+    y_pred1 = bst1.predict(xgb_test)
+
+    # Round 2
+    num_round2 = 2000
+    bst2 = xgb.train(params, xgb_train, num_round2)
+    y_pred2 = bst2.predict(xgb_test)
+
+    #Power Train
+
+    #ypower2 = np.power(y,1/5.0)
+    ypower3 = np.power(y,1/20.0)
+
+    #xgb_train2 = xgb.DMatrix(X, label = ypower2)
+    xgb_train3 = xgb.DMatrix(X, label = ypower3)
+
+
+    #xst2 = xgb.train(params, xgb_train2, num_round)
+    #y_predp2 = xst2.predict(xgb_test)
+
+    xst3 = xgb.train(params, xgb_train3, num_round)
+    y_predp3 = xst3.predict(xgb_test)
+
+    #y_power = (np.power(y_predp2,5.0) + np.power(y_predp3,10.0))/2.0
+    y_power = np.power(y_predp3,20.0)
+
+    y_pred = (np.expm1(0.75*y_pred1+0.25*y_pred2) + y_power)/2.0
 
     return y_pred
 
@@ -64,6 +93,11 @@ class FoldTubeID():
 
     def __iter__(self):
         uniq_id = self.tubeid.unique()
+
+        # Randomize on unique id
+        np.random.seed(0)
+        uniq_id = uniq_id[np.random.permutation(len(uniq_id))]
+
         cv = cross_validation.KFold(len(uniq_id), self.n_folds)
         for trainID, testID in cv:
             train_id = uniq_id[trainID]
@@ -101,19 +135,29 @@ class CVeval():
         After finishing CV, run score() to get the results
         '''
         self.pred = []
+        self.real = []
         if len(params) == 0:
             raise ValueError('Please read in parameters')
 
         for tr, te in self.cv:
-            train = self.trainset.loc[tr,:].copy()
-            test = self.trainset.loc[te,:].copy()
-            y_real = np.log1p(np.array(test.iloc[:,-1]))
+            self.train = self.trainset.loc[tr,:].copy()
+            self.test = self.trainset.loc[te,:].copy()
+
+            # Randomize and set seed
+            # np.random.permutation(len(trainp1))
+            np.random.seed(1)
+            self.train = self.train.iloc[np.random.permutation(len(self.train))]
+            np.random.seed(2)
+            self.test = self.test.iloc[np.random.permutation(len(self.test))]
+            y_real = np.array(self.test.iloc[:,-1])
+
 
             # Section for training multi-models if you like
-            y_pred = xgboost_model(train, test, num_round, params)
+            y_pred = xgboost_model(self.train, self.test, num_round, params)
 
-            self.pred += [np.expm1(y_pred)]
-            self.rmsle_score += [np.sqrt(mean_squared_error(y_real,y_pred))]
+            self.pred += [y_pred]
+            self.real += [y_real]
+            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real), np.log1p(y_pred)))]
         print '==========================================================='
         print 'Finished Cross-validation'
         print '==========================================================='

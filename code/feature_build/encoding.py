@@ -6,7 +6,7 @@ __description__
     This file is meant to take the CSV files constructed by fulldatamerge.py
     and encode the categorical features into numbers for modeling
 
-    writes to train.csv and test.csv for modeling 
+    writes to train.csv and test.csv for modeling
 
 
 '''
@@ -21,7 +21,7 @@ from parameters import *
 sys.path.append(os.path.abspath(".."))
 from dataclean import *
 
-traintest = pd.read_csv(os.path.join('..','my_data','traintestCOMP.csv'), header=0)
+traintest = pd.read_csv(os.path.join('..','my_data','traintestNOCOMP.csv'), header=0)
 tube_id = pd.read_csv(os.path.join('..','my_data','tube_assembly_id.csv'), header = 0)
 #tube_id.columns = ['tube_assembly_id']
 
@@ -32,9 +32,25 @@ Encode file and save train and test
 
 traintest2 = traintest[bestcol].copy() #bestcol from parameters.py
 
-### supplier and material_id - encode from dataclean
-lecolumns = ['supplier','material_id']
-traintest2 = encode(traintest2,lecolumns,TRANSFORM_CUTOFF)
+### supplier and material_id and specs - encode from dataclean
+if 'spec1' in traintest2.columns:
+    # Convert all NaN values to 0 before you do anything
+    specs = traintest2.columns[traintest2.columns.str.contains('spec')]
+    traintest2.loc[pd.isnull(traintest2['material_id']),'material_id'] = 0 # NaN -> 0
+    sp = np.array(traintest2['material_id'].values)
+    for s in specs:
+        traintest2.loc[pd.isnull(traintest2[s]),s] = 0
+        sp = np.concatenate((sp,traintest2[s].values))
+    ple_spec = PruneLabelEncoder()
+    ple_spec.fit(sp, cutoff=TRANSFORM_CUTOFF)
+    traintest2['material_id'] = ple_spec.transform(traintest2.material_id.values)
+    for s in specs:
+        traintest2[s] = ple_spec.transform(traintest2[s].values)
+    traintest2 = encode(traintest2,['supplier'],TRANSFORM_CUTOFF)
+else:
+    ### supplier and material_id - encode from dataclean
+    lecolumns = ['supplier','material_id']
+    traintest2 = encode(traintest2,lecolumns,TRANSFORM_CUTOFF)
 
 ### bracket_pricing
 traintest2['bracket_pricing'] = [1 if x=='Yes' else 0 for x in traintest2.bracket_pricing.values]
@@ -82,13 +98,13 @@ train = traintest2.iloc[0:30213]
 test = traintest2.iloc[30213:]
 tube_id2 = tube_id.iloc[0:30213]
 
-file_train = '../my_data/train.csv'
+# file_train from parameters.py
 train.to_csv(file_train, index = False)
 print 'File created:', file_train
 print 'DataFrame shape:', train.shape
 print
 
-file_test = '../my_data/test.csv'
+# file_test from parameters.py
 test.to_csv(file_test, index = False)
 print 'File created:', file_test
 print 'DataFrame shape:', test.shape
