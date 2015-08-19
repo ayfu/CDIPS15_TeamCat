@@ -21,7 +21,7 @@ from parameters import *
 sys.path.append(os.path.abspath(".."))
 from dataclean import *
 
-traintest = pd.read_csv(os.path.join('..','my_data','traintestNOCOMP.csv'), header=0)
+traintest = pd.read_csv(os.path.join('..','my_data','traintest150818.csv'), header=0)
 tube_id = pd.read_csv(os.path.join('..','my_data','tube_assembly_id.csv'), header = 0)
 #tube_id.columns = ['tube_assembly_id']
 
@@ -29,25 +29,37 @@ tube_id = pd.read_csv(os.path.join('..','my_data','tube_assembly_id.csv'), heade
 '''
 Encode file and save train and test
 '''
+#traintest2 = traintest[bestcol].copy() #bestcol from parameters.py
+traintest2 = traintest.copy()
 
-traintest2 = traintest[bestcol].copy() #bestcol from parameters.py
-
-### supplier and material_id and specs - encode from dataclean
-traintest2 = traintest[bestcol].copy()
+### specs - encode from dataclean
+# SPECS already encoded
+# add total spec
+"""
+# specs encoded in traintest150817
 if 'spec1' in traintest2.columns:
     # Convert all NaN values to 0 before you do anything
     specs = traintest2.columns[traintest2.columns.str.contains('spec')]
+    specs = specs[:-1]
     for s in specs:
         traintest2.loc[pd.notnull(traintest2[s]),s] = 1
         traintest2.loc[pd.isnull(traintest2[s]),s] = 0
-### supplier and material_id - encode from dataclean
+"""
+
+################################################################################
+### Supplier and material_id
+################################################################################
 lecolumns = ['supplier','material_id']
 traintest2 = encode(traintest2,lecolumns,TRANSFORM_CUTOFF)
 
+################################################################################
 ### bracket_pricing
+################################################################################
 traintest2['bracket_pricing'] = [1 if x=='Yes' else 0 for x in traintest2.bracket_pricing.values]
 
+################################################################################
 ### end_a_2x, end_x_1x, end_x_2x, end_a, end_x: PruneLabelEncoder from dataclean
+################################################################################
 traintest2['end_x_1x'] = [1 if x=='Y' else 0 for x in traintest2['end_x_1x']]
 traintest2['end_x_2x'] = [1 if x=='Y' else 0 for x in traintest2['end_x_2x']]
 traintest2['end_a_2x'] = [1 if x=='Y' else 0 for x in traintest2['end_a_2x']]
@@ -59,13 +71,11 @@ ple_end.fit(end_vals, cutoff=TRANSFORM_CUTOFF)
 traintest2['end_a'] = ple_end.transform(traintest2.end_a.values)
 traintest2['end_x'] = ple_end.transform(traintest2.end_x.values)
 
-### all quantity_*
-quantids = traintest2.columns[traintest2.columns.str.contains('quantity_')]
-for qid in quantids:
-    traintest2[qid] = [0 if np.isnan(x) else x for x in traintest2[qid].values]
-
+################################################################################
 ### all component_id_* in bestcol
+################################################################################
 # PruneLabelEncoder from dataclean
+
 compids = traintest2.columns[traintest2.columns.str.contains('component_id_')]
 comp_vals = np.array([])
 for cid in compids:
@@ -76,6 +86,75 @@ ple_comptype.fit(comp_vals, cutoff=TRANSFORM_CUTOFF)
 for cid in compids:
     traintest2[cid] = ple_comptype.transform(traintest2[cid].values)
 
+################################################################################
+### all component_type_id_comp* in bestcol
+################################################################################
+"""
+# use a labelEncoder for this
+comp_type = traintest2.columns[traintest2.columns.str.contains('component_type_id')]
+comptype_vals = np.array([])
+for ct in comp_type:
+    traintest2.loc[pd.isnull(traintest2[ct]),ct] = 0
+    comptype_vals = np.concatenate((comptype_vals, np.array(traintest2[ct])))
+ple_comptypeID = PruneLabelEncoder()
+ple_comptypeID.fit(comptype_vals, cutoff=TRANSFORM_CUTOFF)
+for ct in comp_type:
+    traintest2[ct] = ple_comptypeID.transform(traintest2[ct].values)
+"""
+# Use Frequency encoding
+comp_type = traintest2.columns[traintest2.columns.str.contains('component_type_id')]
+for y in range(len(comp_type)):
+    for x in traintest2[comp_type[y]].value_counts().index:
+        traintest2.loc[traintest2[comp_type[y]] == x, comp_type[y]] = traintest2[comp_type[y]].value_counts()[x]
+    traintest2.loc[pd.isnull(traintest2[comp_type[y]]),comp_type[y]] = 0
+
+
+################################################################################
+# Orientation standard encoding
+################################################################################
+orient = list(traintest2.columns[traintest2.columns.str.contains('orient')])
+traintest2 = encode(traintest2,orient,TRANSFORM_CUTOFF)
+sum_orient = np.zeros(len(traintest2))
+for x in orient:
+    sum_orient += np.array(traintest2[x])
+traintest2['orient_sum'] = sum_orient
+
+################################################################################
+# Encoding overall_length
+################################################################################
+ovlength_total = np.zeros(len(traintest2))
+ovlength = traintest2.columns[traintest2.columns.str.contains('overall_length')]
+for x in ovlength:
+    traintest2.loc[pd.isnull(traintest2[x]),x] = 0
+    ovlength_total += np.array(traintest2[x])
+traintest2['total_ovlength'] = ovlength_total
+
+################################################################################# Connection TYPE
+################################################################################
+conn_type = traintest2.columns[traintest2.columns.str.contains('connection_type_id')]
+"""
+for x in conn_type:
+    traintest2.loc[pd.isnull(traintest2[x]),x] = 0
+traintest2 = encode_force(traintest2,conn_type,TRANSFORM_CUTOFF)
+# frequency encode
+for y in conn_type:
+    for x in traintest2[y].value_counts().index:
+        traintest2.loc[traintest2[y] == x, y] = traintest2[y].value_counts()[x]
+"""
+
+
+conn_total = np.zeros(len(traintest2))
+for x in conn_type:
+    traintest2.loc[pd.notnull(traintest2[x]),x] = 1
+    traintest2.loc[pd.isnull(traintest2[x]),x] = 0
+    conn_total += np.array(traintest2[x])
+traintest2['total_conn'] = conn_total
+
+# frequency encode
+for x in traintest2['total_conn'].value_counts().index:
+    traintest2.loc[traintest2['total_conn'] == x, 'total_conn'] = traintest2['total_conn'].value_counts()[x]
+
+
 
 '''
 Save files to my_files
@@ -85,10 +164,14 @@ print '========================================================================'
 print '========================   Saving Files   =============================='
 print '========================================================================'
 print
-
+traintest2 = traintest2[bestcol] #bestcol from parameters.py
 train = traintest2.iloc[0:30213]
 test = traintest2.iloc[30213:]
 tube_id2 = tube_id.iloc[0:30213]
+
+print 'columns used:'
+print bestcol
+print
 
 # file_train from parameters.py
 train.to_csv(file_train, index = False)
@@ -115,3 +198,92 @@ tube_id2.to_csv(file_tubes2, index = False)
 print 'File created:', file_tubes2
 print 'DataFrame shape:', tube_id2.shape
 print
+
+
+"""
+GRAVEYARD
+"""
+
+### all quantity_*
+"""
+quantids = traintest2.columns[traintest2.columns.str.contains('quantity_')]
+for qid in quantids:
+    traintest2[qid] = [0 if np.isnan(x) else x for x in traintest2[qid].values]
+"""
+
+
+
+
+
+"""
+################################################################################
+# BOOM
+################################################################################
+### material_id - frequency encoding
+for x in traintest2['material_id'].value_counts().index:
+    traintest2.loc[traintest2['material_id'] == x, 'material_id'] = traintest2['material_id'].value_counts()[x]
+    traintest2.loc[pd.isnull(traintest2['material_id']),'material_id'] = 0
+
+### supplier - encode from dataclean
+for x in traintest2['supplier'].value_counts().index:
+    traintest2.loc[traintest2['supplier'] == x, 'supplier'] = traintest2['supplier'].value_counts()[x]
+    traintest2.loc[pd.isnull(traintest2['supplier']),'supplier'] = 0
+
+#traintest2['end_a'] = [1 if x =='Yes' else 0 for x in traintest['end_a']]
+#traintest2['end_x'] = [1 if x =='Yes' else 0 for x in traintest['end_x']]
+################################################################################
+# BOOM
+################################################################################
+
+
+
+ENDVALS
+################################################################################
+# BOOM
+################################################################################
+end_vals = ['end_a','end_x']
+for end in end_vals:
+    for x in traintest2[end].value_counts().index:
+        traintest2.loc[traintest2[end] == x, end] = traintest2[end].value_counts()[x]
+    traintest2.loc[pd.isnull(traintest2[end]),end] = 0
+################################################################################
+# BOOM
+################################################################################
+
+
+
+
+COMPONENT_ID
+################################################################################
+# BOOM
+################################################################################
+# frequency encode
+compids = traintest2.columns[traintest2.columns.str.contains('component_id_')]
+comp_vals = np.array([])
+for cid in compids:
+    traintest2.loc[pd.isnull(traintest2[cid]),cid] = 0
+    comp_vals = np.concatenate((comp_vals, np.array(traintest2[cid])))
+comp_vals = pd.Series(comp_vals)
+for cid in compids:
+    for x in comp_vals.value_counts().index:
+        if x == 0:
+            continue
+        elif x in traintest2[cid].unique():
+            traintest2.loc[traintest2[cid] == x, cid] = traintest2[cid].value_counts()[x]
+################################################################################
+# BOOM
+################################################################################
+
+################################################################################
+# BOOM
+################################################################################
+compids = traintest2.columns[traintest2.columns.str.contains('component_id_')]
+for cid in compids:
+    for x in traintest2[cid].value_counts().index:
+        traintest2.loc[traintest2[cid] == x, cid] = traintest2[cid].value_counts()[x]
+    traintest2.loc[pd.isnull(traintest2[cid]),cid] = 0
+################################################################################
+# BOOM
+################################################################################
+
+"""

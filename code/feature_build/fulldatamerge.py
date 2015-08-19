@@ -59,7 +59,9 @@ traintest = pd.merge(traintest, all_files['tube'], on = 'tube_assembly_id')
 
 traintest['year'] = traintest['quote_date'].dt.year
 traintest['month'] = traintest['quote_date'].dt.month
+traintest['week'] = traintest['quote_date'].dt.dayofyear % 52
 traintest['day'] = [date.days for date in traintest['quote_date'] - dt.date(1982,1,1)]
+
 
 
 # Add weight
@@ -80,7 +82,25 @@ for key1 in comp_id:
     dfTemp = pd.DataFrame({key1 : sorted(traintest[key1].unique(),reverse = True),weight_id[i]: weight})
     traintest = pd.merge(traintest,dfTemp, how = 'left', on = key1)
 
-traintest = traintest[['tube_assembly_id', 'supplier','year','month','day', 'annual_usage', 'min_order_quantity', 'bracket_pricing', 'quantity', 'cost', 'component_id_1', 'quantity_1','weight_id_1', 'component_id_2', 'quantity_2', 'weight_id_2', 'component_id_3', 'quantity_3', 'weight_id_3', 'component_id_4', 'quantity_4','weight_id_4', 'component_id_5', 'quantity_5', 'weight_id_5', 'component_id_6', 'quantity_6', 'weight_id_6', 'component_id_7', 'quantity_7', 'weight_id_7', 'component_id_8', 'quantity_8', 'weight_id_8', 'material_id', 'diameter', 'wall', 'length', 'num_bends', 'bend_radius', 'end_a_1x', 'end_a_2x', 'end_x_1x', 'end_x_2x', 'end_a', 'end_x', 'num_boss', 'num_bracket', 'other']]
+traintest = traintest[['tube_assembly_id', 'supplier','year','month','week', 'day', 'annual_usage', 'min_order_quantity', 'bracket_pricing', 'quantity', 'cost', 'component_id_1', 'quantity_1','weight_id_1', 'component_id_2', 'quantity_2', 'weight_id_2', 'component_id_3', 'quantity_3', 'weight_id_3', 'component_id_4', 'quantity_4','weight_id_4', 'component_id_5', 'quantity_5', 'weight_id_5', 'component_id_6', 'quantity_6', 'weight_id_6', 'component_id_7', 'quantity_7', 'weight_id_7', 'component_id_8', 'quantity_8', 'weight_id_8', 'material_id', 'diameter', 'wall', 'length', 'num_bends', 'bend_radius', 'end_a_1x', 'end_a_2x', 'end_x_1x', 'end_x_2x', 'end_a', 'end_x', 'num_boss', 'num_bracket', 'other']]
+
+# Add weight and total quantity
+weight_id = ['weight_id_'+str(i) for i in range(1,9)]
+quantity_id = ['quantity_'+str(i) for i in range(1,9)]
+weight_total = np.zeros(len(traintest))
+quantity_total = np.zeros(len(traintest))
+
+for w in weight_id:
+    traintest.loc[pd.isnull(traintest[w]),w] = 0
+    #traintest[w] = [0 if np.isnan(x) else x for x in traintest[w].values]
+    weight_total += np.array(traintest[w])
+traintest['total_weight'] = weight_total
+
+for q in quantity_id:
+    traintest.loc[pd.isnull(traintest[q]),q] = 0
+    #traintest[q] = [0 if np.isnan(x) else x for x in traintest[q].values]
+    quantity_total += np.array(traintest[q])
+traintest['total_quantity'] = quantity_total
 
 
 # ADDING comp_*.csv files
@@ -244,10 +264,103 @@ for i in contype:
     traintest[i] = conn_type(i)
 
 
+
+
+
+'''
+Add SPECS data frame by merging
+'''
+
+spc = rest_files['specs'].copy()
+specstrain = spc[spc['tube_assembly_id'].isin(traintest['tube_assembly_id'])]
+
+#train3 = traintest.copy()
+
+traintest = pd.merge(traintest,specstrain, how = 'left', on = 'tube_assembly_id')
+
+
+# Add an empty column for total_specs
+traintest['total_specs'] = np.zeros(len(traintest))
+# Encode spec 01
+total_spec = np.array(traintest['total_specs'])
+specs = traintest.columns[traintest.columns.str.contains('spec')]
+specs = specs[:-1]
+for s in specs:
+    traintest.loc[pd.notnull(traintest[s]),s] = 1
+    traintest.loc[pd.isnull(traintest[s]),s] = 0
+for s in specs:
+    total_spec += np.array(traintest[s])
+traintest['total_specs'] = total_spec
+
+
+
+'''
+CLEAN OUT DIRTY COLUMN
+'''
+
+c = traintest['nominal_size_1_comp1'].copy()
+print "# of 'See Drawing' observations:", len(c[c == 'See Drawing'])
+
+for x in range(len(c)):
+    if pd.isnull(c[x]):
+        continue
+    else:
+        try:
+            c[x] = float(c[x])
+        except:
+            c[x] = np.nan
+
+traintest['nominal_size_1_comp1'] = c
+
+
+'''
+CORRECTING FOR IMPLAUSIBLE VALUES:
+
+the values for the lengths of these tube assemblies were found to be 0.
+https://www.kaggle.com/c/caterpillar-tube-pricing/forums/t/15001/ta-04114/83230#post83230
+
+Making corrections according to this post.
+
+'''
+colval = {'TA-00152': 19,
+       'TA-00154': 75,
+       'TA-00156': 24,
+       'TA-01098': 10,
+       'TA-01631': 48,
+       'TA-03520': 46,
+       'TA-04114': 135,
+       'TA-17390': 40,
+       'TA-18227': 74,
+       'TA-18229': 51}
+for x in colval:
+    traintest.loc[traintest['tube_assembly_id'] == x,'length'] = colval[x]
+
+file_name = '../my_data/traintest150818.csv'
+traintest.to_csv(file_name, index = False)
+print 'File created:', file_name
+print 'DataFrame shape:', traintest.shape
+
+'''
+file_name2 = '../my_data/tube_assembly_id.csv'
+tube_assem = traintest['tube_assembly_id']
+tube_assem.columns = ['tube_assembly_id']
+tube_assem.to_csv(file_name2, index = False)
+print 'File create:', file_name2
+print 'Data shape:', traintest['tube_assembly_id'].shape
+'''
+
+
+
+
+
+
+
+
+
 '''
 TYPE_COMPONENT incorporation
 '''
-
+"""
 comptype = traintest.columns[traintest.columns.str.contains('component_type')]
 def comp_type(col):
     train2 = traintest.copy()
@@ -268,27 +381,14 @@ def comp_type(col):
 
 for i in comptype:
     traintest[i] = comp_type(i)
-
-
-
-'''
-Add SPECS data frame by merging
-'''
-
-spc = rest_files['specs'].copy()
-specstrain = spc[spc['tube_assembly_id'].isin(traintest['tube_assembly_id'])]
-
-#train3 = traintest.copy()
-
-traintest = pd.merge(traintest,specstrain, how = 'left', on = 'tube_assembly_id')
-
+"""
 
 
 '''
-Add COMPONENT TYPE ID to traintest
+Add COMPONENT TYPE ID to traintest COMPONENT ID
 '''
 
-
+"""
 componName = traintest.columns[traintest.columns.str.contains('component_id')]
 
 def comp_name(col):
@@ -312,36 +412,4 @@ def comp_name(col):
 for i in componName:
     traintest[i] = comp_name(i)
 
-
-
-'''
-CLEAN OUT DIRTY COLUMN
-'''
-
-c = traintest['nominal_size_1_comp1'].copy()
-print "# of 'See Drawing' observations:", len(c[c == 'See Drawing'])
-
-for x in range(len(c)):
-    if pd.isnull(c[x]):
-        continue
-    else:
-        try:
-            c[x] = float(c[x])
-        except:
-            c[x] = np.nan
-
-traintest['nominal_size_1_comp1'] = c
-
-file_name = '../my_data/traintestCOMP.csv'
-traintest.to_csv(file_name, index = False)
-print 'File created:', file_name
-print 'DataFrame shape:', traintest.shape
-
-'''
-file_name2 = '../my_data/tube_assembly_id.csv'
-tube_assem = traintest['tube_assembly_id']
-tube_assem.columns = ['tube_assembly_id']
-tube_assem.to_csv(file_name2, index = False)
-print 'File create:', file_name2
-print 'Data shape:', traintest['tube_assembly_id'].shape
-'''
+"""

@@ -73,3 +73,23 @@ def encode(df, columns, TRANSFORM_CUTOFF):
             df[col] = le.transform(df[col])
 
     return df
+
+def encode_force(df, columns, TRANSFORM_CUTOFF):
+    '''
+    takes in a dataframe, list of columns, and TRANSFORM_CUTOFF
+
+    same as encode but it doesn't do the str check
+    '''
+    temp = df.copy()
+
+    # Checking if there are 2 or more unique values in each column
+    for x in columns:
+        if len(df[x].unique()) < 2:
+            return 'Error: Fewer than 2 unique values in a column'
+
+    for col in columns:
+        le = PruneLabelEncoder()
+        le.fit(df[col],TRANSFORM_CUTOFF)
+        df[col] = le.transform(df[col])
+
+    return df
