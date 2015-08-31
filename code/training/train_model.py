@@ -6,7 +6,7 @@ __file name__
 
 __description__
 
-    This file will train the model for submission. Output is to the
+    This file will train the XGB model for submission. Output is to the
     specifications of the competition.
 
 
@@ -17,11 +17,7 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 #from sklearn import linear_model
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn import cross_validation
-#from sklearn.grid_search import GridSearchCV
-from sklearn.metrics import make_scorer, mean_squared_error
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 import xgboost as xgb #extreme gradient boosting
 
 sys.path.append(os.path.abspath(".."))
@@ -82,7 +78,7 @@ class xgbModel():
         y_power = np.power(y_predp3,20.0)
 
         self.y_pred = (np.expm1(0.75*y_pred1+0.25*y_pred2) + y_power)/2.0
-
+        #self.y_pred = 0.35*np.expm1(0.75*y_pred1+0.25*y_pred2) + 0.65*y_power
         print
         print "================================================================"
         print "================  Finished with Prediction   ==================="
@@ -101,3 +97,26 @@ class xgbModel():
         print "===============  Finished with Writing File   =================="
         print "================================================================"
         print 'File:', pred_file
+
+
+################################################################################
+################################################################################
+################################################################################
+# Model Building
+################################################################################
+################################################################################
+################################################################################
+if __name__ == "__main__":
+
+    train = pd.read_csv('../my_data/train' + name_file, header = 0)
+    test = pd.read_csv('../my_data/test' + name_file, header = 0)
+    build = xgbModel(train, test, num_round, params_xgb)
+    build.buildXGB()
+    pred_file = '../' + pred_file
+    print '#############################################'
+    print 'Built a model from:'
+    print 'training set:', file_train.split('/')[-1]
+    print 'testing set:', file_test.split('/')[-1]
+    print '#############################################'
+    print
+    build.convertPred()

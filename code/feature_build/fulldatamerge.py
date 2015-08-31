@@ -185,6 +185,15 @@ taking care of the 'end_a' and 'end_x' columns
 '''
 
 
+re_a = rest_files['tube_end_form'].copy()
+re_a.columns = ['end_a','forming_a']
+traintest = pd.merge(traintest, re_a, on = 'end_a', how = 'left')
+
+re_x = rest_files['tube_end_form'].copy()
+re_x.columns = ['end_x','forming_x']
+traintest = pd.merge(traintest, re_x, on = 'end_x', how = 'left')
+
+"""
 def tube_end(col):
     global traintest
     train2 = traintest.copy()
@@ -204,7 +213,7 @@ def tube_end(col):
 
 traintest = tube_end('end_a')
 traintest = tube_end('end_x')
-
+"""
 
 
 '''
@@ -278,7 +287,7 @@ specstrain = spc[spc['tube_assembly_id'].isin(traintest['tube_assembly_id'])]
 
 traintest = pd.merge(traintest,specstrain, how = 'left', on = 'tube_assembly_id')
 
-
+"""
 # Add an empty column for total_specs
 traintest['total_specs'] = np.zeros(len(traintest))
 # Encode spec 01
@@ -291,7 +300,7 @@ for s in specs:
 for s in specs:
     total_spec += np.array(traintest[s])
 traintest['total_specs'] = total_spec
-
+"""
 
 
 '''
@@ -335,7 +344,7 @@ colval = {'TA-00152': 19,
 for x in colval:
     traintest.loc[traintest['tube_assembly_id'] == x,'length'] = colval[x]
 
-file_name = '../my_data/traintest150818.csv'
+file_name = '../my_data/traintest150827c.csv'
 traintest.to_csv(file_name, index = False)
 print 'File created:', file_name
 print 'DataFrame shape:', traintest.shape

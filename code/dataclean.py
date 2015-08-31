@@ -3,7 +3,7 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder, MinMaxScaler
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import cross_validation
 from sklearn.grid_search import GridSearchCV
