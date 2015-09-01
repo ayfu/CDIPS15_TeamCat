@@ -13,11 +13,11 @@ import numpy as np
 
 # file names
 #name_file = 'TEST3.csv'
-name_file = 'MEANSPEC2.csv'
+name_file = 'TEST3.csv'
 rf_file = 'TEST3.csv'
 keras_file = 'KERAS02.csv'
 #name_file = 'TOTSPEC1.csv'
-pred_file = '../notebooks/predictions/cost_predicted_model28n.csv'
+pred_file = '../notebooks/predictions/cost_predicted_model28o.csv'
 
 # encoding cutoff
 TRANSFORM_CUTOFF = 1
@@ -46,6 +46,9 @@ bestcol = list(['supplier',                'year',               'month',
              #'total_specs', #'volume',
              #'uniq_specs',
              'mean_specs',
+             #'mean_weight',
+             #'mean_ann_usage',
+             #'mean_quantity',
              #'count_specs',
  'component_type_id_comp1','component_type_id_comp2','component_type_id_comp3',
                     'cost'])

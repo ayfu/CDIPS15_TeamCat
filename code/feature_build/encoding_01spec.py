@@ -33,6 +33,23 @@ Encode file and save train and test
 traintest2 = traintest.copy()
 
 ################################################################################
+### mean_weight, mean_quantity
+################################################################################
+
+traintest3 = traintest.copy()
+component_id = traintest3.columns[traintest3.columns.str.contains('component_id')]
+for x in component_id:
+    traintest3.loc[pd.notnull(traintest[x]),x] = 1
+    traintest3.loc[pd.isnull(traintest[x]),x] = 0
+temp = traintest3[component_id[0]]
+for x in component_id[1:]:
+    temp += traintest3[x]
+traintest2['comp_num'] = temp
+traintest2.loc[traintest2['comp_num'] == 0, 'comp_num'] = 1.0
+traintest2['mean_weight'] = traintest2['total_weight'].copy()
+traintest2['mean_weight'] = traintest2['total_weight']/traintest2['comp_num'].astype(float)
+
+################################################################################
 ### 1st component_id (make new column) engineering
 ### 1st component_type_id (make new column) engineering
 ################################################################################
@@ -319,6 +336,18 @@ temp3 = traintest2[['supplier','annual_usage']].groupby('supplier').mean()
 temp3['supplier'] = temp3.index
 temp3.columns = ['mean_ann_usage','supplier']
 traintest2 = pd.merge(traintest2,temp3, on = 'supplier', how = 'left')
+
+temp3 = traintest2[['tube_assembly_id','quantity']].groupby('tube_assembly_id').mean()
+temp3['tube_assembly_id'] = temp3.index
+temp3.columns = ['mean_quantity','tube_assembly_id']
+traintest2 = pd.merge(traintest2,temp3, on = 'tube_assembly_id', how = 'left')
+
+"""
+temp3 = traintest2[['supplier','quantity']].groupby('supplier').mean()
+temp3['supplier'] = temp3.index
+temp3.columns = ['mean_quantity','supplier']
+traintest2 = pd.merge(traintest2,temp3, on = 'supplier', how = 'left')
+"""
 
 ################################################################################# Create train and test
 ################################################################################
