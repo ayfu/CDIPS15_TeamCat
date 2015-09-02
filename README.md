@@ -24,7 +24,8 @@ To start, a working model can be built solely from `train_set.csv`, `test_set.cs
 These files can be merged together on the `tube_assembly_id` feature after concatenating `train_set.csv` with the `test_set.csv` by their row (this creates a "traintest" dataframe). 
 In my estimation, working with this data alone can likely get a top 25-50% submission.
 
-![image](https://github.com/ayfu/CDIPS15_TeamCat/some_figures/files.png)
+![figures image](https://github.com/ayfu/CDIPS15_TeamCat/tree/master/some_figures/files.PNG?raw=true "files")
+<img src="./some_figures/files.PNG" alt="files" align="center" width="700px"/>
 
 - `train_set` and `test_set` contain these features: tube assembly ID, supplier, quote date, annual usage, minimum order, bracket pricing (Y/N), quantity, cost
 
@@ -50,7 +51,8 @@ Another useful feature of XGBoost is that the user can easily define their own o
 
 After initially exploring the data and building a working model, I decided to build a cross-validation workflow since our cross-validation in scikit-learn was giving us unrealitically better scores than our actual submission score. After looking through the documentation on how cross-validation is performed, I found a data leak in the splitting of the data due to bracket pricing.
 
-![image2](https://github.com/ayfu/CDIPS15_TeamCat/some_figures/bracket_price.png)
+![Bracket price image](https://github.com/ayfu/CDIPS15_TeamCat/tree/master/some_figures/bracket_price.png?raw=true "bracket price")
+<img src="./some_figures/bracket_price.png" alt="bracket_price" align="center" width="700px"/>
 
 One can see from the figure above that the same tube assembly (by `tube_assembly_id`) is repeated 8 times over. The only difference is the quantity at which one can get a volumne discount for purchasing many of the same tube assembly. For a meaningful cross-validation score, I had to make sure that none of the same tube assemblies would be in both the training set and the testing set or else the model will be predict a price on a tube assembly that's already known. After fixing this problem, I was told that this kind of data leakage is common in genomics and proteomics. It seems to be a general problem.
 
@@ -60,19 +62,22 @@ I found that most of my improvements to the model in this competition were made 
 
 Another example of a useful new feature is the `day`, which was defined as a continuous variable starting at January 1st, 1982. This date was chosen because the earliest tube assembly quote was made in 1982. It was thought that this feature could help capture inflation.
 
-![image3](https://github.com/ayfu/CDIPS15_TeamCat/some_figures/days.png)
+![Days image](https://github.com/ayfu/CDIPS15_TeamCat/tree/master/some_figures/days.png?raw=true "days")
+<img src="./some_figures/days.png" alt="days" align="center" width="700px"/>
 
 It can be seen from the scatter plot above that most of the quotes occur recently, which corresponds to large x-values. Although I found that most of the quotes were made between 2011-2014, this feature was the fourth most used feature in building the decision trees.
 
 Another interesting set of features is the specifications from the `specs.csv` file. According to the Kaggle website, the specifications file "contains the list of unique specifications for the tube assembly. These can refer to materials, processes, rust protection, etc." In my experience, specifications can vary widely and can contribute to a huge markup in the price, but it really depends on what's being asked by the customer. Intuitively, this seemed like an especially important file.
 
-![image4](https://github.com/ayfu/CDIPS15_TeamCat/some_figures/specs.png)
+![specs image](https://github.com/ayfu/CDIPS15_TeamCat/tree/master/some_figures/specs.PNG?raw=true "specs")
+<img src="./some_figures/specs.PNG" alt="specs" align="center" width="700px"/>
 
 The image above shows a subset of the data in the specs features after being merged into the main traintest dataframe. Most of the columns were found to be `NULL`. It should be noted that the specs are sorted in increasing numerical value for each row with multiple specifications. Strings "SP-0004" does not necessarily give any insight into the actual specification. If I took these features as is and either did standard label encoding or 1 hot encoding, these features would degrade the performance of the model significantly. I tried replacing each `NULL` value with an empty string and then concatenating all of the strings together into a new feature column. The goal was to capture unique combinations of specifications. I also explored their relationship with specific suppliers. This led to some improvement in the model. However, the biggest improvement came when I converted each specification to 1 and each `NULL` value to 0 and then summed the columns into a new column that expressed the total number of specifications for each tube assembly. This feature gave one of the biggest improvements to the model.
 
 A counter-intuitive feature I found was the total quantity, which I defined as the total number of components in a given tube assembly.
 
-![image5](https://github.com/ayfu/CDIPS15_TeamCat/some_figures/total_quant.png)
+![total quantity image](https://github.com/ayfu/CDIPS15_TeamCat/tree/master/some_figures/total_quant.png?raw=true "total quantity")
+<img src="./some_figures/total_quant.png" alt="total_quant" align="center" width="700px"/>
 
 The above image is a kde plot of the cost as a function of total number of components from 0 to 6. It can be seen that the cost is not monotonically increasing as a function of the total number of components. For example, a 4 component tube assembly tends to be cheaper than a 3 component assembly. With this in mind, I tried one hot encoding this feature and it led to a good improvement in my model.
 
