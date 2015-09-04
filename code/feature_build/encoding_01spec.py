@@ -1,6 +1,7 @@
 '''
 __file__
-    encoding.py
+
+    encoding_01spec.py
 
 __description__
     This file is meant to take the CSV files constructed by fulldatamerge.py

@@ -1,13 +1,19 @@
+'''
+__file__
+
+    dataclean.py
+
+__description__
+
+    This file is meant to provide utility functions for encoding and cleaning the full dataframe.
+
+'''
+
 import os, glob
 from collections import defaultdict
 import pandas as pd
 import numpy as np
-from sklearn import linear_model
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, MinMaxScaler
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn import cross_validation
-from sklearn.grid_search import GridSearchCV
-from sklearn.metrics import make_scorer
 
 class PruneLabelEncoder(LabelEncoder):
     def __init___(self):

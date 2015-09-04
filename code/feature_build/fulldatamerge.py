@@ -1,4 +1,13 @@
-# %matplotlib inline
+'''
+__file__
+
+    fulldatamerge.py
+
+__description__
+
+    This file is meant to take all of the CSV files provided by Kaggle and Caterpillar and construct one dataframe. It takes about 15-30 minutes to create the dataframe.
+
+'''
 import os, glob, sys
 import pandas as pd
 import numpy as np
