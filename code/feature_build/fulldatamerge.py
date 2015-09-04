@@ -193,7 +193,6 @@ traintest = traintest.drop(droptraincol, axis = 1)
 taking care of the 'end_a' and 'end_x' columns
 '''
 
-
 re_a = rest_files['tube_end_form'].copy()
 re_a.columns = ['end_a','forming_a']
 traintest = pd.merge(traintest, re_a, on = 'end_a', how = 'left')
@@ -202,27 +201,6 @@ re_x = rest_files['tube_end_form'].copy()
 re_x.columns = ['end_x','forming_x']
 traintest = pd.merge(traintest, re_x, on = 'end_x', how = 'left')
 
-"""
-def tube_end(col):
-    global traintest
-    train2 = traintest.copy()
-    re = rest_files['tube_end_form'].copy()
-    tem = []
-    if col not in ['end_a','end_x']:
-        return 'Error'
-    else:
-        for i in train2[col]:
-            if i == 'NONE':
-                tem += [np.nan]
-            else:
-                t = re[re['end_form_id'] == i]['forming']
-                tem += [t.reset_index()['forming'][0]]
-    traintest[col] = tem
-    return traintest
-
-traintest = tube_end('end_a')
-traintest = tube_end('end_x')
-"""
 
 
 '''
@@ -291,25 +269,8 @@ Add SPECS data frame by merging
 
 spc = rest_files['specs'].copy()
 specstrain = spc[spc['tube_assembly_id'].isin(traintest['tube_assembly_id'])]
-
-#train3 = traintest.copy()
-
 traintest = pd.merge(traintest,specstrain, how = 'left', on = 'tube_assembly_id')
 
-"""
-# Add an empty column for total_specs
-traintest['total_specs'] = np.zeros(len(traintest))
-# Encode spec 01
-total_spec = np.array(traintest['total_specs'])
-specs = traintest.columns[traintest.columns.str.contains('spec')]
-specs = specs[:-1]
-for s in specs:
-    traintest.loc[pd.notnull(traintest[s]),s] = 1
-    traintest.loc[pd.isnull(traintest[s]),s] = 0
-for s in specs:
-    total_spec += np.array(traintest[s])
-traintest['total_specs'] = total_spec
-"""
 
 
 '''
@@ -358,14 +319,6 @@ traintest.to_csv(file_name, index = False)
 print 'File created:', file_name
 print 'DataFrame shape:', traintest.shape
 
-'''
-file_name2 = '../my_data/tube_assembly_id.csv'
-tube_assem = traintest['tube_assembly_id']
-tube_assem.columns = ['tube_assembly_id']
-tube_assem.to_csv(file_name2, index = False)
-print 'File create:', file_name2
-print 'Data shape:', traintest['tube_assembly_id'].shape
-'''
 
 
 
@@ -373,7 +326,9 @@ print 'Data shape:', traintest['tube_assembly_id'].shape
 
 
 
-
+"""
+GRAVEYARD
+"""
 
 '''
 TYPE_COMPONENT incorporation

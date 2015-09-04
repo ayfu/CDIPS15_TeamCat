@@ -4,6 +4,7 @@ __file__
     encoding_01spec.py
 
 __description__
+
     This file is meant to take the CSV files constructed by fulldatamerge.py
     and encode the categorical features into numbers for modeling
 
@@ -167,18 +168,7 @@ for cid in compids:
 ################################################################################
 ### all component_type_id_comp* in bestcol
 ################################################################################
-"""
-# use a labelEncoder for this
-comp_type = traintest2.columns[traintest2.columns.str.contains('component_type_id')]
-comptype_vals = np.array([])
-for ct in comp_type:
-    traintest2.loc[pd.isnull(traintest2[ct]),ct] = 0
-    comptype_vals = np.concatenate((comptype_vals, np.array(traintest2[ct])))
-ple_comptypeID = PruneLabelEncoder()
-ple_comptypeID.fit(comptype_vals, cutoff=TRANSFORM_CUTOFF)
-for ct in comp_type:
-    traintest2[ct] = ple_comptypeID.transform(traintest2[ct].values)
-"""
+
 # Use Frequency encoding
 comp_type = traintest2.columns[traintest2.columns.str.contains('component_type_id')]
 for y in range(len(comp_type)):
@@ -190,25 +180,25 @@ for y in range(len(comp_type)):
 ################################################################################
 # Orientation standard encoding
 ################################################################################
-"""
+
 orient = list(traintest2.columns[traintest2.columns.str.contains('orient')])
 traintest2 = encode(traintest2,orient,TRANSFORM_CUTOFF)
 sum_orient = np.zeros(len(traintest2))
 for x in orient:
     sum_orient += np.array(traintest2[x])
 traintest2['orient_sum'] = sum_orient
-"""
+
 ################################################################################
 # Encoding overall_length
 ################################################################################
-"""
+
 ovlength_total = np.zeros(len(traintest2))
 ovlength = traintest2.columns[traintest2.columns.str.contains('overall_length')]
 for x in ovlength:
     traintest2.loc[pd.isnull(traintest2[x]),x] = 0
     ovlength_total += np.array(traintest2[x])
 traintest2['total_ovlength'] = ovlength_total
-"""
+
 ################################################################################# Connection TYPE
 ################################################################################
 conn_type = traintest2.columns[traintest2.columns.str.contains('connection_type_id')]
@@ -371,19 +361,14 @@ if one_hot:
     train = train.drop(['cost'], axis = 1)
     test = test.drop(['cost'], axis = 1)
 
-    #onehotcol = ['supplier', 'month', 'total_specs', 'total_quantity', 'num_bends', 'wall', 'week', 'bend_radius','min_order_quantity']
-    #for one hot encoding - need to make sure test can fit in
-
-    #test.loc[test['total_specs'] == 10, 'total_specs'] = 9
     onehotcol = ['supplier', 'month', 'total_quantity', 'bend_radius']
-    #onehotcol = ['supplier', 'month', 'total_quantity', 'bend_radius', 'end_a', 'end_x']
+
     for col in onehotcol:
         train_temp = train[col].values
         test_temp = test[col].values
         combine = np.concatenate((train_temp,test_temp))
         lbl = OneHotEncoder()
         lbl.fit(np.resize(np.array(combine).astype(float), (len(combine),1)))
-        #lbl.fit(np.resize(np.array(train_temp).astype(float), (len(train_temp),1)))
 
         train_temp = lbl.transform(np.resize(np.array(train_temp).astype(float), (len(train_temp),1))).toarray()
         test_temp = lbl.transform(np.resize(np.array(test_temp).astype(float), (len(test_temp),1))).toarray()
@@ -476,7 +461,7 @@ print
 
 
 """
-GRAVEYARD
+GRAVEYARD BELOW
 """
 
 ### all quantity_*

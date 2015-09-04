@@ -45,19 +45,12 @@ def xgboost_model(train, test, num_round, params):
     xgb_train = xgb.DMatrix(X, label = ylog1p)
     xgb_test = xgb.DMatrix(X_test)
 
-    #bst = xgb.train(params, xgb_train, num_round)
-    #y_pred = bst.predict(xgb_test)
     print '#############################################'
     print 'Building XGB Model'
     print '#############################################'
     # Round 1
     bst1 = xgb.train(params, xgb_train, num_round)
     y_pred1 = bst1.predict(xgb_test)
-
-    # Round 2
-    #num_round2 = 2000
-    #bst2 = xgb.train(params, xgb_train, num_round2)
-    #y_pred2 = bst2.predict(xgb_test)
 
     #Power Train
 
@@ -68,8 +61,6 @@ def xgboost_model(train, test, num_round, params):
 
     p = 0.5
     y_pred = p*np.expm1(y_pred1) + (1-p)*np.power(y_predp3,47.0)
-    #y_pred=p*np.expm1(0.75*y_pred1+0.25*y_pred2)+(1-p)*np.power(y_predp3,20.0)
-    #y_pred = 0.35*np.expm1(0.75*y_pred1+0.25*y_pred2) + 0.65*y_power
 
     return y_pred
 
@@ -106,7 +97,6 @@ def rf_model(train, test, params):
 
 
     y_pred = (np.expm1(y_pred1) + np.power(y_pred2,40.0))/2.0
-    #y_pred = np.expm1(y_pred1)
     return y_pred
 
 class Model():
@@ -171,8 +161,8 @@ if __name__ == "__main__":
     print
     print 'Parameters:'
     print params_xgb, num_round
-    #print 'rf training set:', rf_train.split('/')[-1]
-    #print 'rf testing set:', rf_test.split('/')[-1]
+    print 'rf training set:', rf_train.split('/')[-1]
+    print 'rf testing set:', rf_test.split('/')[-1]
     print '#############################################'
     print
     build.convertPred()

@@ -19,11 +19,8 @@ import sys, os, glob
 from collections import defaultdict
 import pandas as pd
 import numpy as np
-#from sklearn import linear_model
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn import cross_validation
-#from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import make_scorer, mean_squared_error
 import xgboost as xgb #extreme gradient boosting
 from keras.models import Sequential
@@ -46,8 +43,6 @@ def xgboost_model(train, test, num_round, params):
     xgb_train = xgb.DMatrix(X, label = ylog1p)
     xgb_test = xgb.DMatrix(X_test)
 
-    #bst = xgb.train(params, xgb_train, num_round)
-    #y_pred = bst.predict(xgb_test)
 
     # Round 1
     bst1 = xgb.train(params, xgb_train, num_round)
@@ -59,17 +54,13 @@ def xgboost_model(train, test, num_round, params):
     #y_pred2 = bst2.predict(xgb_test)
 
     #Power Train
-
     ypower3 = np.power(y,1/47.0)
     xgb_train3 = xgb.DMatrix(X, label = ypower3)
     xst3 = xgb.train(params, xgb_train3, num_round)
     y_predp3 = xst3.predict(xgb_test)
 
-    #y_pred=(np.expm1(0.75*y_pred1+0.25*y_pred2) + np.power(y_predp3,20.0))/2.0
     p = 0.5
     y_pred = p*np.expm1(y_pred1) + (1-p)*np.power(y_predp3,47.0)
-
-    #y_pred = 0.35*np.expm1(0.75*y_pred1+0.25*y_pred2) + 0.65*y_power
 
     return y_pred
 
@@ -171,8 +162,8 @@ class FoldTubeID():
             train_id = uniq_id[trainID]
             test_id = uniq_id[testID]
             trainID_boolmask = self.tubeid.isin(train_id)
-            #testID_boolmask = self.tubeid.isin(test_id)
-            testID_boolmask = np.logical_not(trainID_boolmask)
+            testID_boolmask = self.tubeid.isin(test_id)
+            # Generator to give row positions for each fold
             yield (np.where(trainID_boolmask)[0], np.where(testID_boolmask)[0])
 
 
