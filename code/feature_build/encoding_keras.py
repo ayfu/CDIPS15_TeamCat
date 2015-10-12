@@ -11,8 +11,10 @@ __description__
 
 '''
 import sys
-import os, glob
+import os
+import glob
 from collections import defaultdict
+
 import pandas as pd
 import numpy as np
 
@@ -21,8 +23,10 @@ from parameters import *
 sys.path.append(os.path.abspath(".."))
 from dataclean import *
 
-traintest = pd.read_csv(os.path.join('..','my_data','traintest150818.csv'), header=0)
-tube_id = pd.read_csv(os.path.join('..','my_data','tube_assembly_id.csv'), header = 0)
+traintest = pd.read_csv(os.path.join('..','my_data','traintest150818.csv'),
+                        header=0)
+tube_id = pd.read_csv(os.path.join('..','my_data','tube_assembly_id.csv'),
+                      header = 0)
 #tube_id.columns = ['tube_assembly_id']
 
 
@@ -55,7 +59,8 @@ traintest2 = encode(traintest2,lecolumns,TRANSFORM_CUTOFF)
 ################################################################################
 ### bracket_pricing
 ################################################################################
-traintest2['bracket_pricing'] = [1 if x=='Yes' else 0 for x in traintest2.bracket_pricing.values]
+vl = traintest2.bracket_pricing.values
+traintest2['bracket_pricing'] = [1 if x=='Yes' else 0 for x in vl]
 
 ################################################################################
 ### end_a_2x, end_x_1x, end_x_2x, end_a, end_x: PruneLabelEncoder from dataclean
@@ -91,7 +96,8 @@ for cid in compids:
 ################################################################################
 """
 # use a labelEncoder for this
-comp_type = traintest2.columns[traintest2.columns.str.contains('component_type_id')]
+m = traintest2.columns.str.contains('component_type_id')
+comp_type = traintest2.columns[m]
 comptype_vals = np.array([])
 for ct in comp_type:
     traintest2.loc[pd.isnull(traintest2[ct]),ct] = 0
@@ -102,10 +108,12 @@ for ct in comp_type:
     traintest2[ct] = ple_comptypeID.transform(traintest2[ct].values)
 """
 # Use Frequency encoding
-comp_type = traintest2.columns[traintest2.columns.str.contains('component_type_id')]
+mask = traintest2.columns.str.contains('component_type_id')
+comp_type = traintest2.columns[mask]
 for y in range(len(comp_type)):
     for x in traintest2[comp_type[y]].value_counts().index:
-        traintest2.loc[traintest2[comp_type[y]] == x, comp_type[y]] = traintest2[comp_type[y]].value_counts()[x]
+        traintest2.loc[traintest2[comp_type[y]] == x, comp_type[y]] =
+                       traintest2[comp_type[y]].value_counts()[x]
     traintest2.loc[pd.isnull(traintest2[comp_type[y]]),comp_type[y]] = 0
 
 
@@ -131,9 +139,11 @@ for x in ovlength:
     ovlength_total += np.array(traintest2[x])
 traintest2['total_ovlength'] = ovlength_total
 """
-################################################################################# Connection TYPE
 ################################################################################
-conn_type = traintest2.columns[traintest2.columns.str.contains('connection_type_id')]
+# Connection TYPE
+################################################################################
+mask2 = traintest2.columns.str.contains('connection_type_id')
+conn_type = traintest2.columns[mask2]
 """
 for x in conn_type:
     traintest2.loc[pd.isnull(traintest2[x]),x] = 0
@@ -154,13 +164,16 @@ traintest2['total_conn'] = conn_total
 """
 # frequency encode
 for x in traintest2['total_conn'].value_counts().index:
-    traintest2.loc[traintest2['total_conn'] == x, 'total_conn'] = traintest2['total_conn'].value_counts()[x]
+    traintest2.loc[traintest2['total_conn'] == x, 'total_conn'] =
+                   traintest2['total_conn'].value_counts()[x]
 """
 
 
-################################################################################# Scaling my continuous variables (ie. length)
 ################################################################################
-#fields = ["annual_usage", "min_order_quantity", "quantity", "diameter", "wall", "length", "num_bends", "bend_radius"]
+# Scaling my continuous variables (ie. length)
+################################################################################
+#fields = ["annual_usage", "min_order_quantity", "quantity",
+#          "diameter", "wall", "length", "num_bends", "bend_radius"]
 #fields = ["diameter", "wall", "length", "bend_radius"]
 """
 fields = ["length", "diameter"]
@@ -170,7 +183,8 @@ for col in fields:
 """
 
 
-################################################################################# Create train and test
+################################################################################
+# Create train and test
 ################################################################################
 
 
@@ -201,8 +215,10 @@ for col in onehotcol:
     lbl = OneHotEncoder()
     lbl.fit(np.resize(np.array(combine).astype(float), (len(combine),1)))
 
-    train_temp = lbl.transform(np.resize(np.array(train_temp).astype(float), (len(train_temp),1))).toarray()
-    test_temp = lbl.transform(np.resize(np.array(test_temp).astype(float), (len(test_temp),1))).toarray()
+    train_temp = lbl.transform(np.resize(np.array(train_temp).astype(float),
+                               (len(train_temp),1))).toarray()
+    test_temp = lbl.transform(np.resize(np.array(test_temp).astype(float),
+                              (len(test_temp),1))).toarray()
 
     for i in range(train_temp.shape[1]):
         train[col + "_" + str(i)] = train_temp[:,i]
@@ -281,92 +297,3 @@ tube_id2.to_csv(file_tubes2, index = False)
 print 'File created:', file_tubes2
 print 'DataFrame shape:', tube_id2.shape
 print
-
-
-"""
-GRAVEYARD
-"""
-
-### all quantity_*
-"""
-quantids = traintest2.columns[traintest2.columns.str.contains('quantity_')]
-for qid in quantids:
-    traintest2[qid] = [0 if np.isnan(x) else x for x in traintest2[qid].values]
-"""
-
-
-
-
-
-"""
-################################################################################
-# BOOM
-################################################################################
-### material_id - frequency encoding
-for x in traintest2['material_id'].value_counts().index:
-    traintest2.loc[traintest2['material_id'] == x, 'material_id'] = traintest2['material_id'].value_counts()[x]
-    traintest2.loc[pd.isnull(traintest2['material_id']),'material_id'] = 0
-
-### supplier - encode from dataclean
-for x in traintest2['supplier'].value_counts().index:
-    traintest2.loc[traintest2['supplier'] == x, 'supplier'] = traintest2['supplier'].value_counts()[x]
-    traintest2.loc[pd.isnull(traintest2['supplier']),'supplier'] = 0
-
-#traintest2['end_a'] = [1 if x =='Yes' else 0 for x in traintest['end_a']]
-#traintest2['end_x'] = [1 if x =='Yes' else 0 for x in traintest['end_x']]
-################################################################################
-# BOOM
-################################################################################
-
-
-
-ENDVALS
-################################################################################
-# BOOM
-################################################################################
-end_vals = ['end_a','end_x']
-for end in end_vals:
-    for x in traintest2[end].value_counts().index:
-        traintest2.loc[traintest2[end] == x, end] = traintest2[end].value_counts()[x]
-    traintest2.loc[pd.isnull(traintest2[end]),end] = 0
-################################################################################
-# BOOM
-################################################################################
-
-
-
-
-COMPONENT_ID
-################################################################################
-# BOOM
-################################################################################
-# frequency encode
-compids = traintest2.columns[traintest2.columns.str.contains('component_id_')]
-comp_vals = np.array([])
-for cid in compids:
-    traintest2.loc[pd.isnull(traintest2[cid]),cid] = 0
-    comp_vals = np.concatenate((comp_vals, np.array(traintest2[cid])))
-comp_vals = pd.Series(comp_vals)
-for cid in compids:
-    for x in comp_vals.value_counts().index:
-        if x == 0:
-            continue
-        elif x in traintest2[cid].unique():
-            traintest2.loc[traintest2[cid] == x, cid] = traintest2[cid].value_counts()[x]
-################################################################################
-# BOOM
-################################################################################
-
-################################################################################
-# BOOM
-################################################################################
-compids = traintest2.columns[traintest2.columns.str.contains('component_id_')]
-for cid in compids:
-    for x in traintest2[cid].value_counts().index:
-        traintest2.loc[traintest2[cid] == x, cid] = traintest2[cid].value_counts()[x]
-    traintest2.loc[pd.isnull(traintest2[cid]),cid] = 0
-################################################################################
-# BOOM
-################################################################################
-
-"""

@@ -12,8 +12,11 @@ __description__
 
 '''
 
-import sys, os, glob
+import sys
+import os
+import glob
 from collections import defaultdict
+
 import pandas as pd
 import numpy as np
 #from sklearn import linear_model
@@ -43,7 +46,9 @@ class xgbModel():
         X = self.train.as_matrix(self.train.columns[:-1]).astype(float)
         y = self.train.as_matrix(['cost'])[:,0].astype(float)
         ylog1p = np.log1p(y).astype(float)
-        X_test = self.test.as_matrix(self.test.columns[:-1]).astype(float) # cost is still last column
+        # cost is still last column
+        X_test = self.test.as_matrix(self.test.columns[:-1]).astype(float)
+
 
         xgb_train = xgb.DMatrix(X, label = ylog1p)
         xgb_test = xgb.DMatrix(X_test)

@@ -8,13 +8,17 @@ __description__
     This file is meant to take all of the CSV files provided by Kaggle and Caterpillar and construct one dataframe. It takes about 15-30 minutes to create the dataframe.
 
 '''
-import os, glob, sys
-import pandas as pd
-import numpy as np
+import os
+import glob
+import sys
 import datetime as dt
 from math import sqrt
 from collections import Counter
 import copy
+
+import pandas as pd
+import numpy as np
+
 
 ## Read in files
 
@@ -26,8 +30,10 @@ all_files = {}
 for afile in allfiles:
     key = afile.split('\\')[-1].split('.')[0]
     all_files[key] = pd.read_csv(afile, header = 0)
-all_files['train_set'] = pd.read_csv('../../competition_data/train_set.csv', header = 0, parse_dates = ['quote_date'])
-all_files['test_set'] = pd.read_csv('../../competition_data/test_set.csv', header = 0, parse_dates = ['quote_date'])
+all_files['train_set'] = pd.read_csv('../../competition_data/train_set.csv',
+                                     header = 0, parse_dates = ['quote_date'])
+all_files['test_set'] = pd.read_csv('../../competition_data/test_set.csv',
+                                    header = 0, parse_dates = ['quote_date'])
 
 # Components
 comp_dict = {}
@@ -36,7 +42,8 @@ for compfile in comp_files:
     comp_dict[key] = pd.read_csv(compfile,header=0, index_col=0)
 
 # The rest of the files
-rest = ['components.csv','specs.csv','tube_end_form.csv','type_component.csv','type_connection.csv','type_end_form.csv']
+rest = ['components.csv','specs.csv','tube_end_form.csv',
+        'type_component.csv','type_connection.csv','type_end_form.csv']
 restfile = []
 for x in rest:
     restfile += [os.path.join('..','..','competition_data',x)]
@@ -48,7 +55,8 @@ for r in restfile:
 
 
 '''
-concatenate Train and Test together and build a traintest data set to label encode you can subset out the data later with
+concatenate Train and Test together and build a traintest data set to label
+encode you can subset out the data later with
 traintest.loc[len(temptrain):,:] -- something like that
 '''
 
@@ -60,7 +68,8 @@ print '# of observations test:', len(temptest['supplier'])
 temptest['cost'] = [np.nan]*len(temptest['supplier'])
 traintest = pd.concat([temptrain,temptest], ignore_index = True)
 
-traintest = pd.merge(traintest, all_files['bill_of_materials'], on = 'tube_assembly_id')
+traintest = pd.merge(traintest, all_files['bill_of_materials'],
+                     on = 'tube_assembly_id')
 traintest = pd.merge(traintest, all_files['tube'], on = 'tube_assembly_id')
 
 
@@ -69,7 +78,7 @@ traintest = pd.merge(traintest, all_files['tube'], on = 'tube_assembly_id')
 traintest['year'] = traintest['quote_date'].dt.year
 traintest['month'] = traintest['quote_date'].dt.month
 traintest['week'] = traintest['quote_date'].dt.dayofyear % 52
-traintest['day'] = [date.days for date in traintest['quote_date'] - dt.date(1982,1,1)]
+traintest['day'] = [d.days for d in traintest['quote_date'] - dt.date(1982,1,1)]
 
 
 
@@ -88,10 +97,24 @@ for key1 in comp_id:
                 weight.append(comp_dict[filename].loc[key2]['weight'])
     #else:
         #weight.append(np.nan)
-    dfTemp = pd.DataFrame({key1 : sorted(traintest[key1].unique(),reverse = True),weight_id[i]: weight})
+    dfTemp = pd.DataFrame({key1 : sorted(traintest[key1].unique(),
+                          reverse = True),weight_id[i]: weight})
     traintest = pd.merge(traintest,dfTemp, how = 'left', on = key1)
 
-traintest = traintest[['tube_assembly_id', 'supplier','year','month','week', 'day', 'annual_usage', 'min_order_quantity', 'bracket_pricing', 'quantity', 'cost', 'component_id_1', 'quantity_1','weight_id_1', 'component_id_2', 'quantity_2', 'weight_id_2', 'component_id_3', 'quantity_3', 'weight_id_3', 'component_id_4', 'quantity_4','weight_id_4', 'component_id_5', 'quantity_5', 'weight_id_5', 'component_id_6', 'quantity_6', 'weight_id_6', 'component_id_7', 'quantity_7', 'weight_id_7', 'component_id_8', 'quantity_8', 'weight_id_8', 'material_id', 'diameter', 'wall', 'length', 'num_bends', 'bend_radius', 'end_a_1x', 'end_a_2x', 'end_x_1x', 'end_x_2x', 'end_a', 'end_x', 'num_boss', 'num_bracket', 'other']]
+traintest = traintest[['tube_assembly_id', 'supplier','year','month',
+                       'week', 'day', 'annual_usage', 'min_order_quantity',
+                       'bracket_pricing', 'quantity', 'cost', 'component_id_1',
+                       'quantity_1','weight_id_1', 'component_id_2',
+                       'quantity_2', 'weight_id_2', 'component_id_3',
+                       'quantity_3', 'weight_id_3', 'component_id_4',
+                       'quantity_4','weight_id_4', 'component_id_5',
+                       'quantity_5', 'weight_id_5', 'component_id_6',
+                       'quantity_6', 'weight_id_6', 'component_id_7',
+                       'quantity_7', 'weight_id_7', 'component_id_8',
+                       'quantity_8', 'weight_id_8', 'material_id', 'diameter',
+                       'wall', 'length', 'num_bends', 'bend_radius', 'end_a_1x',
+                       'end_a_2x', 'end_x_1x', 'end_x_2x', 'end_a', 'end_x',
+                       'num_boss', 'num_bracket', 'other']]
 
 # Add weight and total quantity
 weight_id = ['weight_id_'+str(i) for i in range(1,9)]
@@ -124,13 +147,15 @@ def comp_column(name):
     else:
         temp = pd.DataFrame({name: []})
         for filename in comp_dict:
-            tempdict = {x: [] for x in comp_dict[filename].drop('weight',axis = 1).columns}
+            tempdict = {x: [] for x in comp_dict[filename].drop('weight',
+                                                              axis = 1).columns}
             for key in sorted(traintest[name].unique(),reverse = True):
                 i = sorted(traintest[name].unique(),reverse = True).index(key)
                 if key in comp_dict[filename].index:
                     for col in tempdict.keys():
                         temp.loc[i,name] = key
-                        temp.loc[i,col] = comp_dict[filename].drop('weight',axis = 1).loc[key][col]
+                        temp.loc[i,col] = comp_dict[filename].drop('weight',
+                                                         axis = 1).loc[key][col]
 
         # Dropping any pure NaN columns
         tempcol = temp.columns.copy()
@@ -269,7 +294,8 @@ Add SPECS data frame by merging
 
 spc = rest_files['specs'].copy()
 specstrain = spc[spc['tube_assembly_id'].isin(traintest['tube_assembly_id'])]
-traintest = pd.merge(traintest,specstrain, how = 'left', on = 'tube_assembly_id')
+traintest = pd.merge(traintest,specstrain, how = 'left',
+                     on = 'tube_assembly_id')
 
 
 
@@ -318,71 +344,3 @@ file_name = '../my_data/traintest150827c.csv'
 traintest.to_csv(file_name, index = False)
 print 'File created:', file_name
 print 'DataFrame shape:', traintest.shape
-
-
-
-
-
-
-
-
-"""
-GRAVEYARD
-"""
-
-'''
-TYPE_COMPONENT incorporation
-'''
-"""
-comptype = traintest.columns[traintest.columns.str.contains('component_type')]
-def comp_type(col):
-    train2 = traintest.copy()
-    re = rest_files['type_component'].copy()
-    comp = []
-    if col not in comptype:
-        return 'Error'
-    else:
-        for i in train2[col]:
-            if i == 'NONE' or i == np.nan or pd.isnull(i) or i == 'OTHER':
-                comp += [np.nan]
-            else:
-                t = re[re['component_type_id'] == i]['name']
-                comp += [t.reset_index()['name'][0]]
-    return comp
-
-#train3 = traintest.copy()
-
-for i in comptype:
-    traintest[i] = comp_type(i)
-"""
-
-
-'''
-Add COMPONENT TYPE ID to traintest COMPONENT ID
-'''
-
-"""
-componName = traintest.columns[traintest.columns.str.contains('component_id')]
-
-def comp_name(col):
-    train2 = traintest.copy()
-    re = rest_files['components'].copy()
-    compName = []
-    if col not in componName:
-
-        return 'Error'
-    else:
-        for i in train2[col]:
-            if i == 'NONE' or i == np.nan or pd.isnull(i) or i == 'OTHER':
-                compName += [np.nan]
-            else:
-                t = re[re['component_id'] == i]['component_type_id']
-                compName += [t.reset_index()['component_type_id'][0]]
-    return compName
-
-#train3 = traintest.copy()
-
-for i in componName:
-    traintest[i] = comp_name(i)
-
-"""

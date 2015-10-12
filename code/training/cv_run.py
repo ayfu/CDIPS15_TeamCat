@@ -15,8 +15,11 @@ __description__
 
 '''
 
-import sys, os, glob
+import sys
+import os
+import glob
 from collections import defaultdict
+
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
@@ -99,7 +102,8 @@ def rf_model(train, test, params):
 
 def keras_model(train, test, params):
     '''
-    Takes in: training set, test set, number of estimators, params is a dictionary
+    Takes in: training set, test set, number of estimators,
+    params is a dictionary
 
     Returns: predictions in a np.log1p format!
     '''
@@ -174,7 +178,8 @@ class CVeval():
         # split_id must be a column of ID values to split on
         # For example, train['tube_assembly_id']
         if sum(pd.isnull(trainset['cost'])) > 0 and len(trainset) != 30213:
-            raise ValueError('Trainset wrong size (30213, n) or NaN values exist.')
+            raise ValueError('Trainset wrong size (30213, n)'+\
+                             ' or NaN values exist.')
 
         if len(split_id) != 30213:
             raise ValueError('split_id must be a column of 30213 observations')
@@ -212,9 +217,11 @@ class CVeval():
             y_real = np.array(self.test.iloc[:,-1])
 
             np.random.seed(3)
-            self.rftrain = self.rftrain.iloc[np.random.permutation(len(self.rftrain))]
+            mask = np.random.permutation(len(self.rftrain))
+            self.rftrain = self.rftrain.iloc[mask]
             np.random.seed(4)
-            self.rftest = self.rftest.iloc[np.random.permutation(len(self.rftest))]
+            mask2 = np.random.permutation(len(self.rftest))
+            self.rftest = self.rftest.iloc[mask2]
             y_real = np.array(self.rftest.iloc[:,-1])
 
             # Section for training multi-models if you like
@@ -225,7 +232,8 @@ class CVeval():
             y_pred = p*y_pred_xgb + (1-p)*y_pred_rf
             self.pred += [y_pred]
             self.real += [y_real]
-            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real), np.log1p(y_pred)))]
+            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real),
+                                 np.log1p(y_pred)))]
         print '==========================================================='
         print 'Finished Cross-validation'
         print '==========================================================='
@@ -260,7 +268,8 @@ class CVeval():
             y_pred = y_pred_xgb
             self.pred += [y_pred]
             self.real += [y_real]
-            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real), np.log1p(y_pred)))]
+            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real),
+                                 np.log1p(y_pred)))]
         print '==========================================================='
         print 'Finished Cross-validation'
         print '==========================================================='
@@ -286,9 +295,11 @@ class CVeval():
             # Randomize and set seed
             # np.random.permutation(len(trainp1))
             np.random.seed(1)
-            self.rftrain = self.rftrain.iloc[np.random.permutation(len(self.rftrain))]
+            mask = np.random.permutation(len(self.rftrain))
+            self.rftrain = self.rftrain.iloc[mask]
             np.random.seed(2)
-            self.rftest = self.rftest.iloc[np.random.permutation(len(self.rftest))]
+            mask2 = np.random.permutation(len(self.rftest))
+            self.rftest = self.rftest.iloc[mask2]
             y_real = np.array(self.rftest.iloc[:,-1])
 
 
@@ -297,7 +308,8 @@ class CVeval():
 
             self.pred += [y_pred]
             self.real += [y_real]
-            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real), np.log1p(y_pred)))]
+            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real),
+                                 np.log1p(y_pred)))]
             cvround += 1
         print '==========================================================='
         print 'Finished Random Forest Cross-validation'
@@ -334,7 +346,8 @@ class CVeval():
 
             self.pred += [y_pred]
             self.real += [y_real]
-            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real), np.log1p(y_pred)))]
+            self.rmsle_score += [np.sqrt(mean_squared_error(np.log1p(y_real),
+                                 np.log1p(y_pred)))]
         print '==========================================================='
         print 'Finished Keras Cross-validation'
         print '==========================================================='

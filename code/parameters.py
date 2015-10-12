@@ -9,8 +9,10 @@ __description__
     For example, bestcol is used to explore the columns
 
 '''
-import os, glob
+import os
+import glob
 from collections import defaultdict
+
 import pandas as pd
 import numpy as np
 

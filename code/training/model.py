@@ -12,8 +12,11 @@ __description__
 
 '''
 
-import sys, os, glob
+import sys
+import os
+import glob
 from collections import defaultdict
+
 import pandas as pd
 import numpy as np
 #from sklearn import linear_model
@@ -101,7 +104,9 @@ def rf_model(train, test, params):
 
 class Model():
 
-    def __init__(self, train, test, rftrain, rftest, num_round, params_xgb, params_rf):
+    def __init__(self, train, test, rftrain,
+                 rftest, num_round,
+                 params_xgb, params_rf):
         self.train = train
         self.test = test
         self.rftrain = rftrain
@@ -151,7 +156,8 @@ if __name__ == "__main__":
     test = pd.read_csv('../my_data/test' + name_file, header = 0)
     rftrain = pd.read_csv('../my_data/train' + rf_file, header = 0)
     rftest = pd.read_csv('../my_data/test' + rf_file, header = 0)
-    build = Model(train, test, rftrain, rftest, num_round, params_xgb, params_rf)
+    build = Model(train, test, rftrain, rftest,
+                  num_round, params_xgb, params_rf)
     build.build_ensemble()
     pred_file = '../' + pred_file
     print '#############################################'

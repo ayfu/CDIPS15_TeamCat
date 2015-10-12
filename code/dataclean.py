@@ -9,8 +9,10 @@ __description__
 
 '''
 
-import os, glob
+import os
+import glob
 from collections import defaultdict
+
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, MinMaxScaler
@@ -60,7 +62,8 @@ def dropcolumns(df, percentnull = 0.9):
 
 def encode(df, columns, TRANSFORM_CUTOFF):
     '''
-    Takes in a dataframe, columns of interest, and a cutoff value for bucketing encoding values
+    Takes in a dataframe, columns of interest, and a cutoff value for bucketing
+    encoding values
 
     If the frequency of an encoded value is below the cutoff, it will bucket
     everything to the first value it encounters that is below the cutoff value
