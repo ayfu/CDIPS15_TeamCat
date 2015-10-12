@@ -134,7 +134,7 @@ Here are some examples of new features I explored:
 - I spent a good amount of time playing with different encoding schemes for my categorical features. Sometimes label encoding gave better results than one-hot encoding.
 
 
-- Towards the end of the competition, I explored aggregating continuous variables such as `annual_usage`, an esimate of how many tube assemblies will be purchased in a year, by supplier, component id, or tube assembly id and taking their mean and/or standard deviation. Given more time, this would be the first thing I would like to explore in more depth because these types of features were starting to improve my model and I believe there is a lot of unexplored territory there.
+- Towards the end of the competition, I explored aggregating continuous variables such as `annual_usage`, an estimate of how many tube assemblies will be purchased in a year, by supplier, component id, or tube assembly id and taking their mean and/or standard deviation. Given more time, this would be the first thing I would like to explore in more depth because these types of features were starting to improve my model and I believe there is a lot of unexplored territory there.
 
 
 # Conclusions
